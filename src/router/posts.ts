@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { db } from "../database/knex";
+import { db } from "../database/BaseDatabase";
 import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();

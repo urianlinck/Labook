@@ -1,46 +1,45 @@
 import express, { Request, Response } from "express";
-import { db } from "../database/knex";
 import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
-router.post("/signup", async (req: Request, res: Response) => {
-  try {
-    const { name, email, password, role } = req.body;
-    let userUUID = uuidv4();
-    if (!name || !email || !password || !role) {
-      return res
-        .status(400)
-        .json({ error: "Nome, email, senha e role são obrigatórios!" });
-    }
+// router.post("/signup", async (req: Request, res: Response) => {
+//   try {
+//     const { name, email, password, role } = req.body;
+//     let userUUID = uuidv4();
+//     if (!name || !email || !password || !role) {
+//       return res
+//         .status(400)
+//         .json({ error: "Nome, email, senha e role são obrigatórios!" });
+//     }
 
-    const [existingEmail] = await db("users")
-      .select()
-      .where("email", "LIKE", `%${email}%`);
+//     const [existingEmail] = await db("users")
+//       .select()
+//       .where("email", "LIKE", `%${email}%`);
 
-    if (existingEmail) {
-      throw new Error("'Email' já cadastrado.");
-    }
+//     if (existingEmail) {
+//       throw new Error("'Email' já cadastrado.");
+//     }
 
-    const newUser = {
-      id: userUUID,
-      name: name,
-      email: email,
-      password: password,
-      role: role,
-      created_at: Date.now(),
-    };
-    await db("users").insert(newUser);
-    return res.status(201).send("Cadastro realizado com sucesso!");
-  } catch (error: any) {
-    console.error(error);
+//     const newUser = {
+//       id: userUUID,
+//       name: name,
+//       email: email,
+//       password: password,
+//       role: role,
+//       created_at: Date.now(),
+//     };
+//     await db("users").insert(newUser);
+//     return res.status(201).send("Cadastro realizado com sucesso!");
+//   } catch (error: any) {
+//     console.error(error);
 
-    if (res.statusCode === 200) {
-      res.status(500);
-    }
-    res.send(error.message);
-  }
-});
+//     if (res.statusCode === 200) {
+//       res.status(500);
+//     }
+//     res.send(error.message);
+//   }
+// });
 
 router.post("/login", async (req: Request, res: Response) =>{
   try{
@@ -103,20 +102,20 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+// router.delete("/:id", async (req: Request, res: Response) => {
+//   try {
+//     const { id } = req.params;
 
-    if (!id) {
-      return res.status(400).json({ error: "ID não encontrada" });
-    }
+//     if (!id) {
+//       return res.status(400).json({ error: "ID não encontrada" });
+//     }
 
-    await db("users").where({ id }).del();
-    return res.status(200).send("Usuário excluído com sucesso!");
-  } catch (error) {
-    console.error("Erro ao atualizar usuário:", error);
-    return res.status(500).json({ error: "Erro ao deletar usuário." });
-  }
-});
+//     await db("users").where({ id }).del();
+//     return res.status(200).send("Usuário excluído com sucesso!");
+//   } catch (error) {
+//     console.error("Erro ao atualizar usuário:", error);
+//     return res.status(500).json({ error: "Erro ao deletar usuário." });
+//   }
+// });
 
 module.exports = router;
