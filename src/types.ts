@@ -12,7 +12,7 @@ export type PostsDB = {
     creator_id: string,
     content: string,
     likes: number,
-    dislike: number,
+    dislikes: number,
     created_at: string,
     updated_at: string
 };
