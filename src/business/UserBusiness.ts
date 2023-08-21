@@ -1,6 +1,12 @@
 import { IdGenerator } from "../services/IdGenerator";
 import { TokenManager } from "../services/TokenManager";
 import { UserDatabase } from "../database/UserDatabase";
+import { CreateUserInputDTO, CreateUserOutputDTO } from "../dtos/signup.dto";
+import { BadRequestError } from "../errors/BadRequestError";
+import { UsersDB } from "../types";
+import { User } from "../models/User";
+import { DeleteUserInputDTO, DeleteUserOutputDTO } from "../dtos/delete.dto";
+import { LoginUserInputDTO, LoginUserOutputDTO } from "../dtos/login.dto";
 
 export class UserBusiness {
   constructor(
@@ -8,108 +14,66 @@ export class UserBusiness {
     private idGenerator: IdGenerator,
     private tokenManager: TokenManager
   ) {}
-
-  async signup(input: any) {
-    const { name, email, password, role } = input;
+  
+  public signup = async (input: CreateUserInputDTO): Promise<CreateUserOutputDTO> => {
     const id = this.idGenerator.generate()
+    const { name, email, password, role } = input;
 
-    if (!name || !email || !password || !role) {
-      throw new Error("Nome, email, senha e role são obrigatórios");
-    }
     const existingEmail = await this.userDatabase.findUserbyEmail(email)
 
     if (existingEmail) {
-      throw new Error("'Email' já cadastrado.");
+      throw new BadRequestError("'Email' já cadastrado.");
     }
-
-    const newUserDB = {
-      id: id,
-      name: name,
-      email: email,
-      password: password,
-      role: role,
-      created_at: new Date().toISOString(),
+    const newUser = new User(
+      id,
+      name,
+      email,
+      password,
+      role,
+      new Date().toISOString()
+    )
+    const newUserDB: UsersDB = {
+      id: newUser.getId(),
+      name: newUser.getName(),
+      email: newUser.getEmail(),
+      password: newUser.getPassword(),
+      role: newUser.getRole(),
+      created_at: newUser.getCreatedAt()
     };
-    //transformar em um insert no UserDatabase
     await this.userDatabase.insertUser(newUserDB);
-    return "Cadastro realizado com sucesso!";
+    const output: CreateUserOutputDTO = {
+      message: "Cadastro realizado com sucesso!",
+      user: {
+        id: newUser.getId(),
+        name: newUser.getName(),
+        email: newUser.getEmail(),
+        role: newUser.getRole(),
+        createdAt: newUser.getCreatedAt()
+      }
+    }
+    return output
   }
 
-  async erase(input: any) {
-    const {id} = input;
+  public login = async (input: LoginUserInputDTO): Promise<LoginUserOutputDTO> => {
+    const {email, password} = input;
 
-    if (!id) {
-      throw new Error("ID não encontrada");
+    await this.userDatabase.findUserbyEmail(email);
+
+    const output: LoginUserOutputDTO = {
+      message: "Bem-vinde!"
     }
+
+    return output;
+  }
+  
+  public erase = async (input: DeleteUserInputDTO): Promise<DeleteUserOutputDTO> => {
+    const {id, password} = input;
 
     await this.userDatabase.deleteUser(id);
-    return "Usuário deletado.";
+
+    const output: DeleteUserOutputDTO = {
+      message: "Cadastro deletado.",
+    }
+    return output;
   }
-
-
-
-//   async login(email: string, password: string) {
-//     if (!email || !password) {
-//       throw new Error("Usuário ou senha inválidos.");
-//     }
-
-//     const [existingEmail] = await db("users")
-//       .select()
-//       .where("email", "LIKE", email);
-
-//     const [correctPassword] = await db("users")
-//       .select()
-//       .where("password", "LIKE", password);
-
-//     if (existingEmail && correctPassword) {
-//       // Procedimento de login
-//       return "Logado com sucesso.";
-//     } else {
-//       throw new Error("Usuário ou senha inválidos.");
-//     }
-//   }
-
-//   async update(
-//     id: string,
-//     newName: string,
-//     newEmail: string,
-//     newPassword: string,
-//     newPassword2: string
-//   ) {
-//     if (!id) {
-//       throw new Error("ID não encontrada");
-//     }
-
-//     if (newPassword !== newPassword2) {
-//       throw new Error("Senhas não conferem.");
-//     }
-
-//     const [user] = await db("users").select().where({ id: id });
-
-//     if (user) {
-//       const updateUser = {
-//         name: newName || user.name,
-//         email: newEmail || user.email,
-//         password: newPassword || user.password,
-//       };
-//       await db("users").where({ id: id }).update(updateUser);
-//       return "Usuário atualizado com sucesso!";
-//     } else {
-//       throw new Error("Usuário não encontrado.");
-//     }
-//   }
-
-//   async delete(id: string) {
-//     try {
-//       if (!id) {
-//         throw new Error("ID não encontrada.");
-//       }
-
-//       await db("users").where({ id }).del();
-//       return "Usuário excluído com sucesso!";
-//     } catch (error) {
-//       console.error("Erro ao deletar usuário:", error);
-//       throw new Error("Erro ao deletar usuário.");
-//     }
-//   }
 }
